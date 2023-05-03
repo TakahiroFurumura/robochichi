@@ -9,3 +9,6 @@ def top():
 @app.route("/chatapi/line")
 def line():
     return "<p>line response</p>"
+
+if __name__ == '__main__':
+    app.run()
