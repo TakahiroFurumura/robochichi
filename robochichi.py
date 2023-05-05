@@ -4,6 +4,7 @@ import base64
 import hashlib
 import hmac
 import config
+import random
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
@@ -71,11 +72,9 @@ def line():
             for e in events:
                 if e.get('mode') == 'active':
                     if e.get('type') == 'message':
-                        logger.debug(e.get('message').get('text'))
-                        logger.debug(e.get('replyToken'))
                         line_bot_api.reply_message(
                             e.get('replyToken'),
-                            TextSendMessage(text='さしすせそ')
+                            TextSendMessage(text=quick_reply(e.get('message').get('text')))
                         )
                     else:
                         pass
@@ -85,6 +84,10 @@ def line():
     except Exception as e:
         logger.exception(str(e))
 
+def quick_reply(message:str):
+    quick_words = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス']
+    random.shuffle(quick_words)
+    return quick_words[0]
 
 if __name__ == '__main__':
     app.run()
