@@ -101,7 +101,7 @@ def quick_reply(message:str) -> str | None:
             henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
             return henji[random.randint(0, len(henji) - 1)]
         elif random.random() < 0.25:
-            return copipe.get_copipe()
+            return 'そうだね。ところでさ、\n' + copipe.get_copipe()
         else:
             return None
     elif re.search('\?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした|教えて', message):
