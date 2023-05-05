@@ -9,7 +9,7 @@ def top():
     return "<p>top</p>"
 
 
-@app.route("/test")
+@app.route("/test", methods=['GET', 'POST'])
 def test():
     try:
         if request.method == 'GET':
@@ -24,7 +24,7 @@ def test():
         logger.exception(str(e))
 
 
-@app.route("/chatapi/line")
+@app.route("/chatapi/line", methods=['GET', 'POST'])
 def line():
     logger.info('GET' if request.method == 'GET'
                 else 'POST' if request.method == 'POST'
