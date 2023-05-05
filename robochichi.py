@@ -116,5 +116,9 @@ def chat_gpt_api(message: str):
     return choices[0].get('message').get('content')
 
 if __name__ == '__main__':
-    app.run()
+    try:
+        app.run()
+
+    except Exception as e:
+        logger.exception(str(e))
 
