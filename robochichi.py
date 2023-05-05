@@ -91,11 +91,14 @@ def line():
 
 def quick_reply(message:str):
     if len(message) < 5:
+        logger.debug('short repply')
         henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
         return henji[random.randint(0, len(henji) - 1)]
-    elif re.search('?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした', message):
+    elif re.search('\?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした', message):
+        logger.debug('chat gpt repply')
         return chat_gpt_api(message)
     else:
+        logger.debug('sa repply')
         sashisuseso = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス']
         return sashisuseso[random.randint(0, len(sashisuseso) - 1)]
 
