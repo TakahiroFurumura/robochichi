@@ -8,6 +8,7 @@ import random
 import re
 import openai
 import copy
+import datetime
 import requests
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
@@ -94,7 +95,7 @@ def quick_reply(message:str):
         logger.debug('short repply')
         henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
         return henji[random.randint(0, len(henji) - 1)]
-    elif re.search('\?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした', message):
+    elif re.search('\?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした|教えて', message):
         logger.debug('chat gpt repply')
         return chat_gpt_api(message)
     else:
@@ -105,6 +106,7 @@ def quick_reply(message:str):
 def chat_gpt_api(message: str):
 
     message_rev = copy.copy(message)
+    message_rev = re.sub('今日', str(datetime.date.today()), message_rev)
 
     res = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -116,7 +118,7 @@ def chat_gpt_api(message: str):
         ],
     )
     choices = res.get('choices')
-    return choices[0].get('message').get('content')
+    return choices[0].get('message').get('content') + '知らんけど'
 
 if __name__ == '__main__':
     try:
