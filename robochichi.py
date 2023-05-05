@@ -4,9 +4,13 @@ import base64
 import hashlib
 import hmac
 import config
+from linebot import LineBotApi
+from linebot.models import TextSendMessage
+from linebot.exceptions import LineBotApiError
 
 app = Flask(__name__)
 logger = logger.get_logger('robochichi')
+line_bot_api = LineBotApi(config.LINE_CHANNEL_ACCESS_TOKEN)
 
 @app.route("/")
 def top():
@@ -69,7 +73,10 @@ def line():
                     if e.get('type') == 'message':
                         logger.debug(e.get('message').get('text'))
                         logger.debug(e.get('replyToken'))
-                        pass
+                        line_bot_api.reply_message(
+                            e.get('replyToken'),
+                            TextSendMessage(text='さしすせそ')
+                        )
                     else:
                         pass
 
