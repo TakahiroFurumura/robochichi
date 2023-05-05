@@ -11,9 +11,10 @@ def top():
 
 @app.route("/test")
 def test():
-    logger.info('GET' if request.method == 'GET'
-                else 'POST' if request.method == 'POST'
-                else 'neither GET nor POST')
+    if request.method == 'GET':
+        logger.info('GET')
+    elif request.method == 'POST':
+        logger.info('POST')
     logger.info('HEADER:' + str(dict(request.headers)))
     logger.info('BODY(JSON):' + str(request.get_data()))
     return jsonify(str(request))
