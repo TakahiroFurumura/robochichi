@@ -11,13 +11,17 @@ def top():
 
 @app.route("/test")
 def test():
-    if request.method == 'GET':
-        logger.info('GET')
-    elif request.method == 'POST':
-        logger.info('POST')
-    logger.info('HEADER:' + str(dict(request.headers)))
-    logger.info('BODY(JSON):' + str(request.get_data()))
-    return jsonify(str(request))
+    try:
+        if request.method == 'GET':
+            logger.info('GET')
+        elif request.method == 'POST':
+            logger.info('POST')
+        logger.info('HEADER:' + str(dict(request.headers)))
+        logger.info('BODY(JSON):' + str(request.get_data()))
+        return jsonify(str(request))
+
+    except Exception as e:
+        logger.exception(str(e))
 
 
 @app.route("/chatapi/line")
