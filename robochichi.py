@@ -116,6 +116,5 @@ def chat_gpt_api(message: str):
     return choices[0].get('message').get('content')
 
 if __name__ == '__main__':
-    #app.run()
-    print(chat_gpt_api('3月19日は何の日？'))
+    app.run()
 
