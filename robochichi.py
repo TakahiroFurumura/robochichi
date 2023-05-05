@@ -41,7 +41,7 @@ def line():
         logger.info('HEADER:' + str(dict(request.headers)))
         logger.info('BODY(JSON):' + str(request.get_data()))
 
-        body = str(request.get_data())  # Request body string
+        body = str(request.get_json())  # Request body string
         h = hmac.new(config.CHANNEL_SECRET.encode('utf-8'),
                      body.encode('utf-8'),
                      hashlib.sha256
