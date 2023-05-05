@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import config
 import random
+import re
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
@@ -85,9 +86,13 @@ def line():
         logger.exception(str(e))
 
 def quick_reply(message:str):
-    quick_words = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス']
-    random.shuffle(quick_words)
-    return quick_words[0]
+    if len(message) < 5:
+        henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
+        return henji[random.randint(0, len(henji) - 1)]
+    else:
+        sashisuseso = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス']
+        return sashisuseso[random.randint(0, len(sashisuseso) - 1)]
+
 
 if __name__ == '__main__':
     app.run()
