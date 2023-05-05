@@ -6,6 +6,9 @@ import hmac
 import config
 import random
 import re
+import openai
+import copy
+import requests
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
@@ -13,6 +16,7 @@ from linebot.exceptions import LineBotApiError
 app = Flask(__name__)
 logger = logger.get_logger('robochichi')
 line_bot_api = LineBotApi(config.LINE_CHANNEL_ACCESS_TOKEN)
+openai.api_key = config.OPENAI_APY_KEY
 
 @app.route("/")
 def top():
@@ -89,10 +93,29 @@ def quick_reply(message:str):
     if len(message) < 5:
         henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
         return henji[random.randint(0, len(henji) - 1)]
+    elif re.search('?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした', message):
+        return chat_gpt_api(message)
     else:
         sashisuseso = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス']
         return sashisuseso[random.randint(0, len(sashisuseso) - 1)]
 
+def chat_gpt_api(message: str):
+
+    message_rev = copy.copy(message)
+
+    res = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "user",
+                "content": message_rev
+            },
+        ],
+    )
+    choices = res.get('choices')
+    return choices[0].get('message').get('content')
 
 if __name__ == '__main__':
-    app.run()
+    #app.run()
+    print(chat_gpt_api('3月19日は何の日？'))
+
