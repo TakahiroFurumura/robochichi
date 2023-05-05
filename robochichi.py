@@ -44,7 +44,7 @@ def line():
         # signature validation
         logger.info('signature validation')
         body = request.get_data(as_text=True)
-        h = hmac.new(config.CHANNEL_SECRET.encode('utf-8'),
+        h = hmac.new(config.LINE_CHANNEL_SECRET.encode('utf-8'),
                      body.encode('utf-8'),
                      hashlib.sha256
                      ).digest()
@@ -56,7 +56,10 @@ def line():
             logger.info('signature validation passed')
         else:
             logger.info('signature validation failed')
+            return 'signature validation failed.'
 
+        body_dict = dict(request.get_json())
+        logger.info(str(body_dict))
 
         return "<p>line response</p>"
     except Exception as e:
