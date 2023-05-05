@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
+import logger
 
 app = Flask(__name__)
+logger = logger.get_logger('robochichi')
 
 @app.route("/")
 def top():
@@ -9,14 +11,22 @@ def top():
 
 @app.route("/test")
 def test():
-    message: dict = {'message': 'this is test message'}
-    body = request.get_json()
-    parameter = request.args.to_dict()
-    return jsonify(parameter.update(body.update(message)))
+    logger.info('GET' if request.method == 'GET'
+                else 'POST' if request.method == 'POST'
+                else 'neither GET nor POST')
+    logger.info('HEADER:' + str(dict(request.headers)))
+    logger.info('BODY(JSON):' + str(request.get_data()))
+    return jsonify(str(request))
 
 
 @app.route("/chatapi/line")
 def line():
+    logger.info('GET' if request.method == 'GET'
+                else 'POST' if request.method == 'POST'
+                else 'neither GET nor POST')
+    logger.info('HEADER:' + str(dict(request.headers)))
+    logger.info('BODY(JSON):' + str(dict(request.get_json())))
+
     return "<p>line response</p>"
 
 
