@@ -50,9 +50,9 @@ def line():
                      ).digest()
         signature = base64.b64encode(h)
         # Compare x-line-signature request header and the signature
-        logger.info(str(signature))
+        logger.info(signature.decode())
         logger.info(request.headers.get('x-line-signature'))
-        if signature == request.headers.get('x-line-signature'):
+        if signature.decode() == request.headers.get('x-line-signature'):
             logger.info('signature validation passed')
         else:
             logger.info('signature validation failed')
