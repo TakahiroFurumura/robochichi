@@ -59,7 +59,20 @@ def line():
             return 'signature validation failed.'
 
         body_dict = dict(request.get_json())
+        events: list[dict] = body_dict.get('events')
         logger.info(str(body_dict))
+        logger.debug(str(events))
+
+        if events is not None:
+            for e in events:
+                if e.get('mode') == 'active':
+                    if e.get('type') == 'message':
+                        logger.debug(e.get('message').get('text'))
+                        logger.debug(e.get('replyToken'))
+                        pass
+                    else:
+                        pass
+
 
         return "<p>line response</p>"
     except Exception as e:
