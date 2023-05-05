@@ -31,7 +31,7 @@ def line():
                     else 'POST' if request.method == 'POST'
                     else 'neither GET nor POST')
         logger.info('HEADER:' + str(dict(request.headers)))
-        logger.info('BODY(JSON):' + str(dict(request.get_json())))
+        logger.info('BODY(JSON):' + str(request.get_data()))
 
         return "<p>line response</p>"
     except Exception as e:
