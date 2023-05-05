@@ -9,6 +9,7 @@ import re
 import openai
 import copy
 import datetime
+import copipe
 import requests
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
@@ -78,10 +79,12 @@ def line():
             for e in events:
                 if e.get('mode') == 'active':
                     if e.get('type') == 'message':
-                        line_bot_api.reply_message(
-                            e.get('replyToken'),
-                            TextSendMessage(text=quick_reply(e.get('message').get('text')))
-                        )
+                        response_message = quick_reply(e.get('message').get('text'))
+                        if response_message is not None:
+                            line_bot_api.reply_message(
+                                e.get('replyToken'),
+                                TextSendMessage(text=response_message)
+                            )
                     else:
                         pass
 
@@ -90,17 +93,23 @@ def line():
     except Exception as e:
         logger.exception(str(e))
 
-def quick_reply(message:str):
+
+def quick_reply(message:str) -> str | None:
     if len(message) < 5:
-        logger.debug('short repply')
-        henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
-        return henji[random.randint(0, len(henji) - 1)]
+        logger.debug('short reply')
+        if random.random() < 0.25:
+            henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
+            return henji[random.randint(0, len(henji) - 1)]
+        elif random.random() < 0.25:
+            return copipe.get_copipe()
+        else:
+            return None
     elif re.search('\?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした|教えて', message):
         logger.debug('chat gpt repply')
         return chat_gpt_api(message)
     else:
         logger.debug('sa repply')
-        sashisuseso = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス']
+        sashisuseso = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス', 'それって、あなたの、感想ですよね']
         return sashisuseso[random.randint(0, len(sashisuseso) - 1)]
 
 def chat_gpt_api(message: str):
