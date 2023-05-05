@@ -31,13 +31,17 @@ def test():
 @app.route("/chatapi/line", methods=['GET', 'POST'])
 def line():
     try:
-        logger.info('GET' if request.method == 'GET'
-                    else 'POST' if request.method == 'POST'
-                    else 'neither GET nor POST')
+        if request.method == 'GET':
+            logger.info('GET')
+            logger.info('HEADER:' + str(dict(request.headers)))
+            logger.info('BODY(JSON):' + str(request.get_data()))
+            return 'this is robochichi.line()'
+        elif request.method == 'POST':
+            logger.info('POST')
         logger.info('HEADER:' + str(dict(request.headers)))
         logger.info('BODY(JSON):' + str(request.get_data()))
 
-        body = request.get_data()  # Request body string
+        body = str(request.get_data())  # Request body string
         h = hmac.new(config.CHANNEL_SECRET.encode('utf-8'),
                      body.encode('utf-8'),
                      hashlib.sha256
