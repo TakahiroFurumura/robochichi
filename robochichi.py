@@ -42,6 +42,7 @@ def line():
         logger.info('BODY(JSON):' + str(request.get_data()))
 
         # signature validation
+        logger.info('signature validation')
         body = request.get_data(as_text=True)
         h = hmac.new(config.CHANNEL_SECRET.encode('utf-8'),
                      body.encode('utf-8'),
@@ -49,9 +50,13 @@ def line():
                      ).digest()
         signature = base64.b64encode(h)
         # Compare x-line-signature request header and the signature
-        logger.info('signature validation')
-        logger.info(request.headers.get('x-line-signature'))
         logger.info(str(signature))
+        logger.info(request.headers.get('x-line-signature'))
+        if signature == request.headers.get('x-line-signature'):
+            logger.info('signature validation passed')
+        else:
+            logger.info('signature validation failed')
+
 
         return "<p>line response</p>"
     except Exception as e:
