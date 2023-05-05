@@ -26,13 +26,16 @@ def test():
 
 @app.route("/chatapi/line", methods=['GET', 'POST'])
 def line():
-    logger.info('GET' if request.method == 'GET'
-                else 'POST' if request.method == 'POST'
-                else 'neither GET nor POST')
-    logger.info('HEADER:' + str(dict(request.headers)))
-    logger.info('BODY(JSON):' + str(dict(request.get_json())))
+    try:
+        logger.info('GET' if request.method == 'GET'
+                    else 'POST' if request.method == 'POST'
+                    else 'neither GET nor POST')
+        logger.info('HEADER:' + str(dict(request.headers)))
+        logger.info('BODY(JSON):' + str(dict(request.get_json())))
 
-    return "<p>line response</p>"
+        return "<p>line response</p>"
+    except Exception as e:
+        logger.exception(str(e))
 
 
 if __name__ == '__main__':
