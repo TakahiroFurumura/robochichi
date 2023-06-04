@@ -26,6 +26,10 @@ def top():
 
 
 @app.route("/test", methods=['GET', 'POST'])
+
+def connection_test():
+
+
 def test():
     try:
         if request.method == 'GET':
@@ -76,13 +80,23 @@ def line():
         logger.debug(str(events))
 
         if events is not None:
-            for e in events:
-                if e.get('mode') == 'active':
-                    if e.get('type') == 'message':
+            for event in events:
+                webhook_event_id = event.get('webhookEventId')
+                timestamp = event.get('timestamp')
+                type = event.get('type')
+                mode = event.get('mode')
+                source: dict = event.get('source')
+                source_type = source.get('type')
+                source_user_id = source.get('userId')
+                source_group_id = source.get('groupId')
+                source_room_id = source.get('roomId')
+
+                if event.get('mode') == 'active':
+                    if event.get('type') == 'message':
                         response_message = quick_reply(e.get('message').get('text'))
                         if response_message is not None:
                             line_bot_api.reply_message(
-                                e.get('replyToken'),
+                                event.get('replyToken'),
                                 TextSendMessage(text=response_message)
                             )
                     else:
@@ -95,13 +109,18 @@ def line():
 
 
 def quick_reply(message:str) -> str | None:
+    """
+
+    :param message:
+    :return:
+    """
     if len(message) < 5:
         logger.debug('short reply')
-        if random.random() < 0.25:
+        if random.random() < 1.0:
             henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
             return henji[random.randint(0, len(henji) - 1)]
-        elif random.random() < 0.25:
-            return 'そうだね。ところでさ、\n' + copipe.get_copipe()
+        #elif random.random() < 0.25:
+        #    return 'そうだね。ところでさ、\n' + copipe.get_copipe()
         else:
             return None
     elif re.search('\?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした|教えて', message):
@@ -113,6 +132,11 @@ def quick_reply(message:str) -> str | None:
         return sashisuseso[random.randint(0, len(sashisuseso) - 1)]
 
 def chat_gpt_api(message: str):
+    """
+
+    :param message:
+    :return:
+    """
 
     message_rev = copy.copy(message)
     message_rev = re.sub('今日', str(datetime.date.today()), message_rev)
