@@ -112,7 +112,7 @@ def line():
                         try:
                             db_line._insert(
                                 {
-                                    'posted_on': timestamp,
+                                    'posted_on': datetime.datetime.fromtimestamp(timestamp),
                                     'source_user_id': source_user_id,
                                     'source_group_id': source_group_id,
                                     'source_room_id': source_room_id,
