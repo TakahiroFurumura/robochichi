@@ -113,13 +113,22 @@ def line():
                                                 "WHERE (source_user_id='%s' OR reply_to_user_id='%s') "
                                                 "ORDER BY posted_on DESC LIMIT %s "
                                                 % (source_user_id, source_user_id, str(REMEMBERED_MSG_COUNT)))
-                        message_log: list = [r[0] for r in db_line._cursor.fetchall()]
+                        message_log: list = [{'role': 'system' if r[2] == 1 else 'user',
+                                              'content': r[0],
+                                              'posted_on': str(r[1])
+                                              }
+                                             for r in db_line._cursor.fetchall()]
+                        message_log.reverse()
+                        message_log.append(
+                            {'role': 'user',
+                             'content': event.get('message').get('text')}
+                        )
 
                         message_text: str = event.get('message').get('text')
                         if message_text.lower().startswith('debug'):
                             response_message = 'debug message ' + str(message_log)
                         else:
-                            response_message = quick_reply(event.get('message').get('text'))
+                            response_message = quick_reply(message_log)
 
                         if response_message is not None:
                             line_bot_api.reply_message(
@@ -172,11 +181,14 @@ def line():
         logger.exception(str(e))
 
 
-def quick_reply(message:str) -> str | None:
+def quick_reply(message_log: list) -> str | None:
     """
 
     :param message:
     :return:
+    """
+
+
     """
     if len(message) < 5:
         logger.debug('short reply')
@@ -194,26 +206,30 @@ def quick_reply(message:str) -> str | None:
         logger.debug('sa repply')
         sashisuseso = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス', 'それって、あなたの、感想ですよね']
         return sashisuseso[random.randint(0, len(sashisuseso) - 1)]
+    """
+
+    logger.debug('chat gpt repply')
+    return chat_gpt_api(message_log)
 
 
-def chat_gpt_api(message: str):
+def chat_gpt_api(message_log: list):
     """
 
     :param message:
     :return:
     """
 
-    message_rev = copy.copy(message)
-    message_rev = re.sub('今日', str(datetime.date.today()), message_rev)
+    messages = [
+        {'role': r.get('role'), 'content': r.get('content')}
+        for r in message_log
+    ]
+
+    # message_rev = copy.copy(message)
+    # message_rev = re.sub('今日', str(datetime.date.today()), message_rev)
 
     res = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[
-            {
-                "role": "user",
-                "content": message_rev
-            },
-        ],
+        messages=messages,
     )
     choices = res.get('choices')
     return choices[0].get('message').get('content') + '知らんけど'
