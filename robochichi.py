@@ -106,7 +106,7 @@ def line():
                                                 "FROM ( "
                                                 "  SELECT message, posted_on "
                                                 "  FROM chatlog_line "
-                                                "  WHERE (source_user_id=%s OR reply_to_user_id=%s "
+                                                "  WHERE (source_user_id=%s OR reply_to_user_id=%s) "
                                                 "  ORDER BY posted_on DESC LIMIT %s"
                                                 "  )"
                                                 "ORDER BY posted_on ASC"
