@@ -101,11 +101,11 @@ def line():
                             response_message = 'debug'
                         else:
                             response_message = quick_reply(event.get('message').get('text'))
-                            if response_message is not None:
-                                line_bot_api.reply_message(
-                                    event.get('replyToken'),
-                                    TextSendMessage(text=response_message)
-                                )
+                        if response_message is not None:
+                            line_bot_api.reply_message(
+                                event.get('replyToken'),
+                                TextSendMessage(text=response_message)
+                            )
                     else:
                         pass
 
