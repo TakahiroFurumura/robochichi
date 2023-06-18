@@ -42,7 +42,7 @@ class MariadbConnection(object):
         self.host = host
         self.user = user
         self.dtabase = database
-        self.table = table
+        self.table_name = table
 
     def __del__(self):
         """
