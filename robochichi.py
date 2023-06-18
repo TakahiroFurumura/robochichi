@@ -113,7 +113,7 @@ def line():
                                                 "WHERE (source_user_id='%s' OR reply_to_user_id='%s') "
                                                 "ORDER BY posted_on DESC LIMIT %s "
                                                 % (source_user_id, source_user_id, str(REMEMBERED_MSG_COUNT)))
-                        message_log: list = [{'role': 'system' if r[2] == 1 else 'user',
+                        message_log: list = [{'role': 'assistant' if r[2] == 1 else 'user',
                                               'content': r[0],
                                               'posted_on': str(r[1])
                                               }
@@ -223,7 +223,15 @@ def chat_gpt_api(message_log: list):
         {'role': r.get('role'), 'content': r.get('content')}
         for r in message_log
     ]
-
+    messages.append(
+        {'role': 'system',
+         'content': 'あなたの名前は「ロボ父」で、古村家の家族のアシスタントです。あなたに話しかける人は全員古村家のメンバーです。'
+                    '古村家のメンバーは、父、母、さゆき、ゆうか、の四名です。'
+                    '父の誕生日は1983年3月19日、母の誕生日は1983年7月6日、さゆきの誕生日は2010年12月13日、ゆうかの誕生日は2014年7月8日です。'
+                    '住所は東京都大田区東雪谷です。最寄り駅は東急池上線の石川台駅です。'
+                    '古村家の門限は17時です。'
+                    '関西弁で回答して下さい。'}
+    )
     # message_rev = copy.copy(message)
     # message_rev = re.sub('今日', str(datetime.date.today()), message_rev)
 
@@ -232,7 +240,7 @@ def chat_gpt_api(message_log: list):
         messages=messages,
     )
     choices = res.get('choices')
-    return choices[0].get('message').get('content') + '知らんけど'
+    return choices[0].get('message').get('content')
 
 
 if __name__ == '__main__':
