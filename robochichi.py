@@ -96,8 +96,8 @@ def line():
 
                 if event.get('mode') == 'active':
                     if event.get('type') == 'message':
-                        message_text = event.get('message').get('text')
-                        if message_text.startwith('debug'):
+                        message_text: str = event.get('message').get('text')
+                        if message_text.lower().startswith('debug'):
                             response_message = 'debug'
                         else:
                             response_message = quick_reply(event.get('message').get('text'))
