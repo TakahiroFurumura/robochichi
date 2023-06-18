@@ -32,9 +32,10 @@ class MariadbConnection(object):
     def __init__(self,
                  host: str,
                  user: str,
-                 password: str = None,
-                 port: int = 3306,
-                 database_name=None):
+                 password: str,
+                 database: str,
+                 table: str,
+                 port: int = 3306):
         self._connection, self._cursor = self.get_db_connection(
             host=host, port=port, user=user, password=password, database_name=database_name)
 

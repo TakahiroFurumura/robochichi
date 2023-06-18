@@ -21,10 +21,12 @@ logger = logger.get_logger('robochichi')
 line_bot_api = LineBotApi(config.LINE_CHANNEL_ACCESS_TOKEN)
 openai.api_key = config.OPENAI_APY_KEY
 
-dbc = mariadb_connection.MariadbConnection(
-             config.DATABASE_CRED.get('host'),
-             config.DATABASE_CRED.get('user'),
-             config.DATABASE_CRED.get('password')
+db_line = mariadb_connection.MariadbConnection(
+    config.DATABASE_CRED.get('host'),
+    config.DATABASE_CRED.get('user'),
+    config.DATABASE_CRED.get('password'),
+    'robochichi',
+    'chatlog_line'
 )
 
 @app.route("/")
@@ -108,7 +110,7 @@ def line():
                                 TextSendMessage(text=response_message)
                             )
                         try:
-                            dbc.insert_one(
+                            db_line._insert(
                                 {
                                     'posted_on': timestamp,
                                     'source_user_id': source_user_id,
@@ -121,7 +123,7 @@ def line():
                                     'is_robochichi_reply': 0
                                 }
                             )
-                            dbc.insert_one(
+                            db_line._insert(
                                 {
                                     'posted_on': str(datetime.datetime.now()),
                                     'source_user_id': None,
