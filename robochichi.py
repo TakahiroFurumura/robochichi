@@ -29,7 +29,7 @@ dbc = mariadb_connection.MariadbConnection(
 
 @app.route("/")
 def top():
-    return "<p>top</p>"
+    return "<p>furumura-seimein.com</p>"
 
 @app.route("/test", methods=['GET', 'POST'])
 
@@ -108,7 +108,6 @@ def line():
                             )
                     else:
                         pass
-
 
         return "<p>line response</p>"
     except Exception as e:
