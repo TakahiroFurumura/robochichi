@@ -101,25 +101,41 @@ def line():
                             response_message = 'debug message'
                         else:
                             response_message = quick_reply(event.get('message').get('text'))
+
                         if response_message is not None:
                             line_bot_api.reply_message(
                                 event.get('replyToken'),
                                 TextSendMessage(text=response_message)
                             )
-
-                        dbc.insert_one(
-                            {
-                                'posted_on': timestamp,
-                                'source_user_id': source_user_id,
-                                'source_group_id': source_group_id,
-                                'source_room_id': source_room_id,
-                                'source_type': source,
-                                'type': source_type,
-                                'mode': mode,
-                                'message_text': message_text,
-                                'is_robochichi_reply': 0
-                            }
-                        )
+                        try:
+                            dbc.insert_one(
+                                {
+                                    'posted_on': timestamp,
+                                    'source_user_id': source_user_id,
+                                    'source_group_id': source_group_id,
+                                    'source_room_id': source_room_id,
+                                    'source_type': source,
+                                    'type': source_type,
+                                    'mode': mode,
+                                    'message_text': message_text,
+                                    'is_robochichi_reply': 0
+                                }
+                            )
+                            dbc.insert_one(
+                                {
+                                    'posted_on': str(datetime.datetime.now()),
+                                    'source_user_id': None,
+                                    'source_group_id': None,
+                                    'source_room_id': None,
+                                    'source_type': None,
+                                    'type': None,
+                                    'mode': None,
+                                    'message_text': response_message,
+                                    'is_robochichi_reply': 1
+                                }
+                            )
+                        except Exception as e:
+                            logger.exception(str(e))
                     else:
                         pass
 
