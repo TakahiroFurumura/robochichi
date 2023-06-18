@@ -11,6 +11,7 @@ import copy
 import datetime
 import copipe
 import requests
+import mariadb_connection
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
@@ -20,15 +21,17 @@ logger = logger.get_logger('robochichi')
 line_bot_api = LineBotApi(config.LINE_CHANNEL_ACCESS_TOKEN)
 openai.api_key = config.OPENAI_APY_KEY
 
+dbc = mariadb_connection.MariadbConnection(
+             config.DATABASE_CRED.get('host'),
+             config.DATABASE_CRED.get('user'),
+             config.DATABASE_CRED.get('password')
+)
+
 @app.route("/")
 def top():
     return "<p>top</p>"
 
-
 @app.route("/test", methods=['GET', 'POST'])
-
-def connection_test():
-
 
 def test():
     try:
@@ -93,7 +96,7 @@ def line():
 
                 if event.get('mode') == 'active':
                     if event.get('type') == 'message':
-                        response_message = quick_reply(e.get('message').get('text'))
+                        response_message = quick_reply(event.get('message').get('text'))
                         if response_message is not None:
                             line_bot_api.reply_message(
                                 event.get('replyToken'),
@@ -131,6 +134,7 @@ def quick_reply(message:str) -> str | None:
         sashisuseso = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス', 'それって、あなたの、感想ですよね']
         return sashisuseso[random.randint(0, len(sashisuseso) - 1)]
 
+
 def chat_gpt_api(message: str):
     """
 
@@ -152,6 +156,7 @@ def chat_gpt_api(message: str):
     )
     choices = res.get('choices')
     return choices[0].get('message').get('content') + '知らんけど'
+
 
 if __name__ == '__main__':
     try:

@@ -1,14 +1,19 @@
-import json
-import mariadb
+# RDB Table接続用のクラスです。TableごとにInstanceを作成します。
 import os
-import decimal
+import sys
 import traceback
-import datetime
-import re
-import typing
+import decimal
+import mariadb
+import config
+import mariadb_connection
 
 
-class MariadbConnection(object):
+class RDBConnection(object):
+    # logger = None
+    connection = None
+    cursor = None
+    database_name = None
+    table_name = None
 
     @staticmethod
     def get_db_connection(
@@ -29,36 +34,27 @@ class MariadbConnection(object):
 
         return connection, cursor
 
-    def __init__(self,
-                 host: str,
-                 user: str,
-                 password: str = None,
-                 port: int = 3306,
-                 database_name=None):
-        self._connection, self._cursor = self.get_db_connection(
-            host=host, port=port, user=user, password=password, database_name=database_name)
+    def __init__(
+            host: str,
+            user: str,
+            password: str,
+            database_name: str,
+            port: int = 3306):
+        """
+        Constructor for Class TableManager. establishes connection to database.
+        :param database_name: table managerが変更するDatabase名。継承クラスで__init__をoverrideして指定。このクラスが使用するmariadbユーザーの選択に影響する。
+        :param table_name: table managerが変更するTable名。継承クラスで__init__をoverrideして指定。このクラスが使用するmariadbユーザーの選択に影響する予定。
+        """
+        # Logger
+        # self.logger = ologger.get_logger(os.path.basename(__file__).replace('.py', '_') + self.__class__.__name__)
+        self.connection, self.cursor = osqldb.get_db_connection(database_name)
 
     def __del__(self):
         """
         commitしてcloseしてからdestructします。
         :return:
         """
-        self._connection.close()
-
-    def batch_update(self):
-        pass
-
-    def insert_one(self, data):
-        """
-        基底クラスでは、引数が辞書型かどうかのValidationのみ提供します。dataが辞書型ではない場合は例外を出します。
-        :param data: dict()
-        :return: boolean, message
-        """
-        # data type validation
-        if not (isinstance(data, dict)):
-            raise TypeError('argument "data" must be dict, not ' + str(type(data)))
-
-        return False, '基底クラスのinsert_oneは何もしません'
+        self.connection.close()
 
     def _match_valtype_to_table(self, data: dict, truncate_str: bool = False) -> None:
         """
@@ -126,7 +122,7 @@ class MariadbConnection(object):
 
         data_rev = {
             key: ('NULL' if data[key] is None
-                  else "'" + str(data[key]) + "'" if type(data[key]) not in (int, float, decimal.Decimal) else str(data[key]))
+                  else "'" + str(data[key]) + "'" if type(data[key]) not in (int, float, Decimal) else str(data[key]))
             for key in data.keys()}
 
         return data_rev
@@ -261,3 +257,18 @@ class MariadbConnection(object):
         """
 
         return False, '基底クラスのarchive_old_recordsは何もしません'
+
+    def batch_update(self):
+        pass
+
+    def insert_one(self, data):
+        """
+        基底クラスでは、引数が辞書型かどうかのValidationのみ提供します。dataが辞書型ではない場合は例外を出します。
+        :param data: dict()
+        :return: boolean, message
+        """
+        # data type validation
+        if not (isinstance(data, dict)):
+            raise TypeError('argument "data" must be dict, not ' + str(type(data)))
+
+        return False, '基底クラスのinsert_oneは何もしません'
