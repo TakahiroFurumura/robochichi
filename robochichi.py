@@ -101,7 +101,13 @@ def line():
                     if event.get('type') == 'message':
 
                         # contextを取得
-
+                        logger.info(
+                            ("SELECT message_text, posted_on, is_robochichi_reply "
+                             "FROM chatlog_line "
+                             "WHERE (source_user_id='%s' OR reply_to_user_id='%s') "
+                             "ORDER BY posted_on DESC LIMIT %s "
+                             % (source_user_id, source_user_id, str(REMEMBERED_MSG_COUNT)))
+                        )
                         db_line._cursor.execute("SELECT message_text, posted_on, is_robochichi_reply "
                                                 "FROM chatlog_line "
                                                 "WHERE (source_user_id=%s OR reply_to_user_id=%s) "
