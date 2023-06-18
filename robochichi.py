@@ -98,14 +98,28 @@ def line():
                     if event.get('type') == 'message':
                         message_text: str = event.get('message').get('text')
                         if message_text.lower().startswith('debug'):
-                            response_message = 'debug'
+                            response_message = 'debug message'
                         else:
                             response_message = quick_reply(event.get('message').get('text'))
                         if response_message is not None:
                             line_bot_api.reply_message(
                                 event.get('replyToken'),
-                                TextSendMessage(text=message_text)
+                                TextSendMessage(text=response_message)
                             )
+
+                        dbc.insert_one(
+                            {
+                                'posted_on': timestamp,
+                                'source_user_id': source_user_id,
+                                'source_group_id': source_group_id,
+                                'source_room_id': source_room_id,
+                                'source_type': source,
+                                'type': source_type,
+                                'mode': mode,
+                                'message_text': message_text,
+                                'is_robochichi_reply': 0
+                            }
+                        )
                     else:
                         pass
 
