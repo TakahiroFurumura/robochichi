@@ -20,6 +20,7 @@ app = Flask(__name__)
 logger = logger.get_logger('robochichi')
 line_bot_api = LineBotApi(config.LINE_CHANNEL_ACCESS_TOKEN)
 openai.api_key = config.OPENAI_APY_KEY
+REMEMBERED_MSG_COUNT = 10
 
 db_line = mariadb_connection.MariadbConnection(
     config.DATABASE_CRED.get('host'),
@@ -98,9 +99,23 @@ def line():
 
                 if event.get('mode') == 'active':
                     if event.get('type') == 'message':
+
+                        # contextを取得
+
+                        db_line._cursor.execute("SElECT message "
+                                                "FROM ( "
+                                                "  SELECT message, posted_on "
+                                                "  FROM chatlog_line "
+                                                "  WHERE (source_user_id=%s OR reply_to_user_id=%s "
+                                                "  ORDER BY posted_on DESC LIMIT %s"
+                                                "  )"
+                                                "ORDER BY posted_on ASC"
+                                                % (source_user_id, source_user_id, str(REMEMBERED_MSG_COUNT)))
+                        message_log: list = [r[0] for r in db_line._cursor.fetchall()]
+
                         message_text: str = event.get('message').get('text')
                         if message_text.lower().startswith('debug'):
-                            response_message = 'debug message'
+                            response_message = 'debug message ' + str(message_log)
                         else:
                             response_message = quick_reply(event.get('message').get('text'))
 
@@ -135,7 +150,7 @@ def line():
                             db_line._insert(
                                 {
                                     'posted_on': str(datetime.datetime.now()),
-                                    'source_user_id': None,
+                                    'source_user_id': source_user_id,
                                     'source_group_id': None,
                                     'source_room_id': None,
                                     'source_type': None,
