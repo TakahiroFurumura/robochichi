@@ -104,7 +104,7 @@ def line():
                         if response_message is not None:
                             line_bot_api.reply_message(
                                 event.get('replyToken'),
-                                TextSendMessage(text=response_message)
+                                TextSendMessage(text=response_message+response_message)
                             )
                     else:
                         pass
