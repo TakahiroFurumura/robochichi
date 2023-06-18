@@ -37,7 +37,12 @@ class MariadbConnection(object):
                  table: str,
                  port: int = 3306):
         self._connection, self._cursor = self.get_db_connection(
-            host=host, port=port, user=user, password=password, database_name=database_name)
+            host=host, port=port, user=user, password=password, database_name=database)
+
+        self.host = host
+        self.user = user
+        self.dtabase = database
+        self.table = table
 
     def __del__(self):
         """
