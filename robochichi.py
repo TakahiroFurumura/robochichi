@@ -102,7 +102,7 @@ def line():
 
                         # contextを取得
 
-                        db_line._cursor.execute("SELECT message, posted_on, is_robochichi_reply "
+                        db_line._cursor.execute("SELECT message_text, posted_on, is_robochichi_reply "
                                                 "FROM chatlog_line "
                                                 "WHERE (source_user_id=%s OR reply_to_user_id=%s) "
                                                 "ORDER BY posted_on DESC LIMIT %s "
