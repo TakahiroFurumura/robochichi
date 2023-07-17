@@ -22,6 +22,7 @@ class TestAuthenticate(unittest.TestCase):
         """
 
     def __del__(self):
+        pass
         # self.test_server_process.kill()
 
     def test_hashpw(self):
