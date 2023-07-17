@@ -34,8 +34,8 @@ db_line = mariadb_connection.MariadbConnection(
 def top():
     return "<p>furumura-seimein.com</p>"
 
-@app.route("/test", methods=['GET', 'POST'])
 
+@app.route("/test", methods=['GET', 'POST'])
 def test():
     try:
         if request.method == 'GET':
@@ -48,6 +48,14 @@ def test():
 
     except Exception as e:
         logger.exception(str(e))
+
+
+@app.route("/auth/token", method=['POST'])
+def validate_token():
+    data = request.json
+    priamry_email = data.get('primary_email')
+    token = data.get('token')
+    return
 
 
 @app.route("/chatapi/line", methods=['GET', 'POST'])
@@ -187,27 +195,6 @@ def quick_reply(message_log: list) -> str | None:
     :param message:
     :return:
     """
-
-
-    """
-    if len(message) < 5:
-        logger.debug('short reply')
-        if random.random() < 1.0:
-            henji = ['へい', 'ほい', 'なんでございましょ', 'なんすか', 'へい御用ですか']
-            return henji[random.randint(0, len(henji) - 1)]
-        #elif random.random() < 0.25:
-        #    return 'そうだね。ところでさ、\n' + copipe.get_copipe()
-        else:
-            return None
-    elif re.search('\?|？|なに|何|どこ|何処|なぜ|なんで|何故|いつ|何時|どうやって|どのように|どうした|教えて', message):
-        logger.debug('chat gpt repply')
-        return chat_gpt_api(message)
-    else:
-        logger.debug('sa repply')
-        sashisuseso = ['さすが～', 'しらなかったぁ～', 'すご～～い', 'センスある～', 'そそそそそうなんだ～', 'まじ草ｗｗｗ', 'テラワロス', 'それって、あなたの、感想ですよね']
-        return sashisuseso[random.randint(0, len(sashisuseso) - 1)]
-    """
-
     logger.debug('chat gpt repply')
     return chat_gpt_api(message_log)
 
