@@ -15,9 +15,17 @@ import mariadb_connection
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
+import hashlib
 from flask_cors import CORS
+from collections.abc import Mapping
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
 
 app = Flask(__name__)
+app.debug = False
+app.config['SECRET_KEY'] = config.SALT
 CORS(
     app,
     supports_credentials=True
@@ -25,6 +33,7 @@ CORS(
 logger = logger.get_logger('robochichi')
 line_bot_api = LineBotApi(config.LINE_CHANNEL_ACCESS_TOKEN)
 openai.api_key = config.OPENAI_APY_KEY
+SALT = config.SALT
 REMEMBERED_MSG_COUNT = 10
 
 db_line = mariadb_connection.MariadbConnection(
@@ -41,6 +50,61 @@ rdbconnection = mariadb_connection.MariadbConnection(
     config.DATABASE_CRED.get('password'),
     'robochichi'
 )
+
+
+def hashpw(password: str) -> str:
+    m = hashlib.sha256()
+    m.update(password.encode())
+    m.update(SALT.encode())
+    return m.hexdigest()
+
+
+def user_info(primary_email: str) -> dict | None:
+    rdbconnection._cursor.execute(
+        "SELECT users.user_id, primary_email, token, users.password, expires_on "
+        "FROM robochichi.users "
+        "  LEFT JOIN robochichi.tokens ON users.user_id = tokens.user_id "
+        "WHERE users.primary_email = %s",
+        (primary_email,)
+    )
+    r = rdbconnection._cursor.fetchone()
+
+    if r:
+        return dict(zip(('user_id', 'primary_email', 'token', 'password', 'expires_on'), r))
+    else:
+        return None
+
+
+def authenticate(username: str, password: str):
+    user = user_info(username)
+    if user and user.get('password') == hashpw(password):
+        return (user.get('user_id'), user.get('primary_email'), user.get('token'))
+
+
+@app.route("/login", methods=['POST'])
+def login():
+    primary_email = request.json.get('username')
+    password = request.json.get('password')
+    if user_info(primary_email) and hashpw(password) == user_info(primary_email).get('password'):
+        return jsonify(
+            access_token=create_access_token(identity=primary_email)
+        )
+    else:
+        return jsonify({'message': 'authentification failed'}, 401)
+
+def identity(payload):
+    return user_info(payload['identity'])
+
+
+jwt = JWTManager(app)
+
+
+@app.route('/protected')
+@jwt_required()
+def protected():
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
+
 
 @app.route("/")
 def top():
@@ -60,26 +124,6 @@ def test():
 
     except Exception as e:
         logger.exception(str(e))
-
-
-@app.route("/auth/validate_token", methods=['POST'])
-def validate_token():
-    data = request.json
-    priamry_email = data.get('primary_email')
-    token = data.get('token')
-
-    rdbconnection._cursor.execute(
-        "SELECT * "
-        "FROM robochichi.users "
-        "  LEFT JOIN robochichi.tokens ON users.user_id = tokens.user_id "
-        "WHERE users.primary_email = %s AND tokens.token = %s ",
-        (priamry_email, token)
-    )
-    if rdbconnection._cursor.fetchone():
-        return True
-    else:
-        return False
-
 
 @app.route("/chatapi/line", methods=['GET', 'POST'])
 def line():
