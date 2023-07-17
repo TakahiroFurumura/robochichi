@@ -15,8 +15,13 @@ import mariadb_connection
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(
+    app,
+    supports_credentials=True
+)
 logger = logger.get_logger('robochichi')
 line_bot_api = LineBotApi(config.LINE_CHANNEL_ACCESS_TOKEN)
 openai.api_key = config.OPENAI_APY_KEY
@@ -28,6 +33,13 @@ db_line = mariadb_connection.MariadbConnection(
     config.DATABASE_CRED.get('password'),
     'robochichi',
     'chatlog_line'
+)
+
+rdbconnection = mariadb_connection.MariadbConnection(
+    config.DATABASE_CRED.get('host'),
+    config.DATABASE_CRED.get('user'),
+    config.DATABASE_CRED.get('password'),
+    'robochichi'
 )
 
 @app.route("/")
@@ -50,12 +62,23 @@ def test():
         logger.exception(str(e))
 
 
-@app.route("/auth/token", method=['POST'])
+@app.route("/auth/validate_token", methods=['POST'])
 def validate_token():
     data = request.json
     priamry_email = data.get('primary_email')
     token = data.get('token')
-    return
+
+    rdbconnection._cursor.execute(
+        "SELECT * "
+        "FROM robochichi.users "
+        "  LEFT JOIN robochichi.tokens ON users.user_id = tokens.user_id "
+        "WHERE users.primary_email = %s AND tokens.token = %s ",
+        (priamry_email, token)
+    )
+    if rdbconnection._cursor.fetchone():
+        return True
+    else:
+        return False
 
 
 @app.route("/chatapi/line", methods=['GET', 'POST'])

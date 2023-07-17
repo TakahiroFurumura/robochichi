@@ -34,7 +34,7 @@ class MariadbConnection(object):
                  user: str,
                  password: str,
                  database: str,
-                 table: str,
+                 table: str = None,
                  port: int = 3306):
         self._connection, self._cursor = self.get_db_connection(
             host=host, port=port, user=user, password=password, database_name=database)
