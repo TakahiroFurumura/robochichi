@@ -52,10 +52,10 @@ rdbconnection = mariadb_connection.MariadbConnection(
 )
 
 
-def hashpw(password: str) -> str:
+def hashpw(password: str, salt: str = None) -> str:
     m = hashlib.sha256()
     m.update(password.encode())
-    m.update(SALT.encode())
+    m.update(salt.encode() if salt else SALT.encode())
     return m.hexdigest()
 
 
@@ -81,16 +81,20 @@ def authenticate(username: str, password: str):
         return (user.get('user_id'), user.get('primary_email'), user.get('token'))
 
 
-@app.route("/login", methods=['POST'])
+@app.route("/login", methods=['POST', 'GET'])
 def login():
-    primary_email = request.json.get('username')
-    password = request.json.get('password')
-    if user_info(primary_email) and hashpw(password) == user_info(primary_email).get('password'):
-        return jsonify(
-            access_token=create_access_token(identity=primary_email)
-        )
-    else:
-        return jsonify({'message': 'authentification failed'}, 401)
+    if request.method == 'GET':
+        return 'Hi, please POST your auth.'
+    elif request.method == 'POST':
+        primary_email = request.json.get('username')
+        password = request.json.get('password')
+
+        if user_info(primary_email) and hashpw(password) == user_info(primary_email).get('password'):
+            return jsonify(
+                access_token=create_access_token(identity=primary_email)
+            )
+        else:
+            return jsonify({'message': 'authentification failed'}, 401)
 
 def identity(payload):
     return user_info(payload['identity'])
