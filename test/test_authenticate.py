@@ -50,6 +50,17 @@ class TestAuthenticate(unittest.TestCase):
             ).encode('utf-8')
         )
         self.assertTrue(robochichi.is_valid_token(user_name, response.json()))
+
+        # wrong password
+        response2 = requests.post(
+            url='http://127.0.0.1:5000/login',
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(
+                {'username': user_name,
+                 'password': test_password + 'wrongtext'}
+            ).encode('utf-8')
+        )
+        self.assertIsNone(response2.json())
         pass
 
     def test_validate_token(self):

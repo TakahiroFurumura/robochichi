@@ -26,10 +26,7 @@ from flask_jwt_extended import JWTManager
 app = Flask(__name__)
 app.debug = False
 app.config['SECRET_KEY'] = config.SALT
-CORS(
-    app,
-    supports_credentials=True
-)
+CORS(app)
 logger = logger.get_logger('robochichi')
 line_bot_api = LineBotApi(config.LINE_CHANNEL_ACCESS_TOKEN)
 openai.api_key = config.OPENAI_APY_KEY
@@ -111,7 +108,7 @@ def login():
             rdbconnection._connection.commit()
             return jsonify(token)
         else:
-            return jsonify({'message': 'authentification failed'}, 401)
+            return jsonify(None)
 
 
 @app.route("/validate-token", methods=['POST', 'GET'])
