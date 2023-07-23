@@ -16,7 +16,7 @@ from linebot import LineBotApi
 from linebot.models import TextSendMessage
 from linebot.exceptions import LineBotApiError
 import hashlib
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from collections.abc import Mapping
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
@@ -92,6 +92,7 @@ def is_valid_token(username: str, token: str):
 
 
 @app.route("/login", methods=['POST', 'GET'])
+@cross_origin()
 def login():
     if request.method == 'GET':
         return 'Hi, please POST your auth.'
@@ -114,6 +115,7 @@ def login():
 
 
 @app.route("/validate-token", methods=['POST', 'GET'])
+@cross_origin()
 def validate_token():
     if request.method == 'GET':
         return 'Hi, please POST your auth.'
@@ -133,17 +135,20 @@ jwt = JWTManager(app)
 
 @app.route('/protected')
 @jwt_required()
+@cross_origin()
 def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
 
 @app.route("/")
+@cross_origin()
 def top():
     return "<p>furumura-seimein.com</p>"
 
 
 @app.route("/test", methods=['GET', 'POST'])
+@cross_origin()
 def test():
     try:
         if request.method == 'GET':
