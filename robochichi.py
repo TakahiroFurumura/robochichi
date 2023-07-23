@@ -59,7 +59,13 @@ def hashpw(password: str, salt: str = None) -> str:
     return m.hexdigest()
 
 
-def user_info(primary_email: str) -> dict | None:
+def get_user_info(primary_email: str) -> dict | None:
+    """
+
+    :param primary_email:
+    :return: dict like {'user_id':, 'primary_email':, 'token':, 'password':, 'expires_on':}
+    """
+    rdbconnection._connection.reset()
     rdbconnection._cursor.execute(
         "SELECT users.user_id, primary_email, token, users.password, expires_on "
         "FROM robochichi.users "
@@ -68,17 +74,21 @@ def user_info(primary_email: str) -> dict | None:
         (primary_email,)
     )
     r = rdbconnection._cursor.fetchone()
-
     if r:
         return dict(zip(('user_id', 'primary_email', 'token', 'password', 'expires_on'), r))
     else:
         return None
 
 
-def authenticate(username: str, password: str):
-    user = user_info(username)
-    if user and user.get('password') == hashpw(password):
-        return (user.get('user_id'), user.get('primary_email'), user.get('token'))
+def is_valid_token(username: str, token: str):
+    user = get_user_info(username)
+    if user:
+        if user.get('token') == token and user.get('expires_on') > datetime.datetime.now():
+            return True
+        else:
+            return False
+    else:
+        return False
 
 
 @app.route("/login", methods=['POST', 'GET'])
@@ -88,17 +98,35 @@ def login():
     elif request.method == 'POST':
         primary_email = request.json.get('username')
         password = request.json.get('password')
+        user_info = get_user_info(primary_email)
 
-        if user_info(primary_email) and hashpw(password) == user_info(primary_email).get('password'):
-            return jsonify(
-                access_token=create_access_token(identity=primary_email)
-            )
+        if user_info is not None and hashpw(password) == get_user_info(primary_email).get('password'):
+            token = create_access_token(identity=primary_email)
+            token_expires_on = datetime.datetime.now() + datetime.timedelta(days=28)
+            rdbconnection._cursor.execute(
+                "INSERT INTO tokens (token, user_id, expires_on) VALUES (%s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE token=%s, expires_on=%s ",
+                (token, user_info.get('user_id'), token_expires_on, token, token_expires_on))
+            rdbconnection._connection.commit()
+            return jsonify(token)
         else:
             return jsonify({'message': 'authentification failed'}, 401)
 
-def identity(payload):
-    return user_info(payload['identity'])
 
+@app.route("/validate-token", methods=['POST', 'GET'])
+def validate_token():
+    if request.method == 'GET':
+        return 'Hi, please POST your auth.'
+    elif request.method == 'POST':
+        primary_email = request.json.get('username')
+        token = request.json.get('token')
+
+        if is_valid_token(primary_email, token):
+            return jsonify({'is_valid_token': True})
+        else:
+            return jsonify({'is_valid_token': False})
+
+    pass
 
 jwt = JWTManager(app)
 
