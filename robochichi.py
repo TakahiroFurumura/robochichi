@@ -87,6 +87,9 @@ def is_valid_token(username: str, token: str):
     else:
         return False
 
+@app.route("/ver", methods=['POST', 'GET'])
+def api_version():
+    return '20230809 2151'
 
 @app.route("/login", methods=['POST', 'GET'])
 @cross_origin()
