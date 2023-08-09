@@ -91,24 +91,41 @@ def is_valid_token(username: str, token: str):
 @app.route("/login", methods=['POST', 'GET'])
 @cross_origin()
 def login():
+    """
+    validates credential information and returns a new token if success.
+    The token is saved in database table "tokens" that stores one unique token for each user_id.
+    :return: {token:, userEmailId:, }
+    """
     if request.method == 'GET':
-        return 'Hi, please POST your auth.'
+        return 'POST with authentication information', 500
     elif request.method == 'POST':
-        primary_email = request.json.get('username')
-        password = request.json.get('password')
-        user_info = get_user_info(primary_email)
-
-        if user_info is not None and hashpw(password) == get_user_info(primary_email).get('password'):
-            token = create_access_token(identity=primary_email)
-            token_expires_on = datetime.datetime.now() + datetime.timedelta(days=28)
-            rdbconnection._cursor.execute(
-                "INSERT INTO tokens (token, user_id, expires_on) VALUES (%s, %s, %s) "
-                "ON DUPLICATE KEY UPDATE token=%s, expires_on=%s ",
-                (token, user_info.get('user_id'), token_expires_on, token, token_expires_on))
-            rdbconnection._connection.commit()
-            return jsonify(token)
+        method = request.json.get('method')
+        if method == 'google':
+            response = {
+                'token': 'testtokenforgoogleauth',
+                'userEmailId': 'testemailUserId'
+            }
+            return jsonify(response), 200
         else:
-            return jsonify(None)
+            primary_email = request.json.get('username')
+            password = request.json.get('password')
+            user_info = get_user_info(primary_email)
+
+            if user_info is None:
+                return jsonify(None), 200
+            else:
+                # by password
+                if hashpw(password) == get_user_info(primary_email).get('password'):
+                    token = create_access_token(identity=primary_email)
+                    token_expires_on = datetime.datetime.now() + datetime.timedelta(days=28)
+                    rdbconnection._cursor.execute(
+                        "INSERT INTO tokens (token, user_id, expires_on) VALUES (%s, %s, %s) "
+                        "ON DUPLICATE KEY UPDATE token=%s, expires_on=%s ",
+                        (token, user_info.get('user_id'), token_expires_on, token, token_expires_on))
+                    rdbconnection._connection.commit()
+                    return jsonify(token)
+                else:
+                    return jsonify(None), 200
 
 
 @app.route("/validate-token", methods=['POST', 'GET'])
