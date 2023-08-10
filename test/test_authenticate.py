@@ -38,7 +38,7 @@ class TestAuthenticate(unittest.TestCase):
         user_info = robochichi.get_user_info('invalidid')
         self.assertIsNone(user_info)
 
-    def test_log_in(self):
+    def test_login_password(self):
         user_name = 'testuser@furumura-seimen.com'
         test_password = 'pasuwado'
         response = requests.post(
@@ -49,7 +49,7 @@ class TestAuthenticate(unittest.TestCase):
                  'password': test_password}
             ).encode('utf-8')
         )
-        self.assertTrue(robochichi.is_valid_token(user_name, response.json()))
+        self.assertTrue(robochichi.is_valid_token(user_name, response.json().get('token')))
 
         # wrong password
         response2 = requests.post(
@@ -60,8 +60,33 @@ class TestAuthenticate(unittest.TestCase):
                  'password': test_password + 'wrongtext'}
             ).encode('utf-8')
         )
-        self.assertIsNone(response2.json())
+        self.assertIsNone(response2.json().get('token'))
         pass
+
+    def test_login_google(self):
+        # code missing error
+        response = requests.post(
+            url='http://127.0.0.1:5000/login',
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(
+                {'method': 'google'}
+            ).encode('utf-8')
+        )
+        print(response.status_code)
+
+        # success
+        code = input('test code?')
+        response = requests.post(
+            url='http://127.0.0.1:5000/login',
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(
+                {'method': 'google',
+                 'code': code,
+                 'redirect_url': 'http://localhost:9000'}
+            ).encode('utf-8')
+        )
+        print(response.status_code)
+        print(response.json())
 
     def test_validate_token(self):
         user_info = robochichi.get_user_info('testuser@furumura-seimen.com')

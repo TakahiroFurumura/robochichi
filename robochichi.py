@@ -1,15 +1,17 @@
+import flask
 from flask import Flask, request, jsonify
 import logger
 import base64
 import hashlib
+import time
 import hmac
 import config
-import random
+import json
 import re
 import openai
 import copy
 import datetime
-import copipe
+import urllib.parse
 import requests
 import mariadb_connection
 from linebot import LineBotApi
@@ -18,6 +20,7 @@ from linebot.exceptions import LineBotApiError
 import hashlib
 from flask_cors import CORS, cross_origin
 from collections.abc import Mapping
+from googleapiclient.discovery import build
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
@@ -87,9 +90,29 @@ def is_valid_token(username: str, token: str):
     else:
         return False
 
+
+def generate_and_store_token(user_id: int) -> str:
+    """
+    generate, store and return authentication token.
+    :param user_id:
+    :return: user token
+    """
+    print('generate_and_store_token')
+    token = create_access_token(identity=user_id)
+    token_expires_on = datetime.datetime.now() + datetime.timedelta(days=28)
+    rdbconnection._cursor.execute(
+        "INSERT INTO tokens (token, user_id, expires_on) VALUES (%s, %s, %s) "
+        "ON DUPLICATE KEY UPDATE token=%s, expires_on=%s ",
+        (token, user_id, token_expires_on, token, token_expires_on))
+    rdbconnection._connection.commit()
+    print(token)
+    return token
+
+
 @app.route("/ver", methods=['POST', 'GET'])
 def api_version():
     return '20230809 2151'
+
 
 @app.route("/login", methods=['POST', 'GET'])
 @cross_origin()
@@ -103,12 +126,70 @@ def login():
         return 'POST with authentication information', 500
     elif request.method == 'POST':
         method = request.json.get('method')
+        # google
         if method == 'google':
-            response = {
-                'token': 'testtokenforgoogleauth',
-                'userEmailId': 'testemailUserId'
-            }
-            return jsonify(response), 200
+            code = request.json.get('code')
+            if not (request.json.get('code') or request.json.get('redirect_url')):
+                return jsonify({'message': 'code or redirect_url is missing.'}), 403
+
+            else:
+                # Google API Token
+                google_access_token_response = requests.post(
+                    url='https://www.googleapis.com/oauth2/v4/token',
+                    headers={'Content-Type': 'application/json'},
+                    data=json.dumps(
+                        {'code': urllib.parse.unquote(request.json.get('code')),
+                         'client_id': config.GOOGLE_CLIENT_ID,
+                         'client_secret': config.GOOGLE_CLIENT_SECRET,
+                         'redirect_uri': request.json.get('redirect_url'),
+                         'grant_type': 'authorization_code',
+                         'access_type': 'offline'
+                         }
+                    ).encode('utf-8')
+                )
+                print(google_access_token_response.status_code)
+                print(google_access_token_response.json())
+                if google_access_token_response.status_code != 200:
+                    pass
+                    # return jsonify(google_access_token_response.json()), google_access_token_response.status_code
+                google_access_token = google_access_token_response.json().get('access_token')
+                # for test
+                google_access_token = 'ya29.a0AfB_byDN18Nwy9J5tVJxwnVcmYSmJR69iGQU3i_U5TLO2pIetVlwuFbbOnDbYKM8m_NYa3Fw6t1GeQIzrt4aE-WWUpOVRfyZotXJtuGo4otWC89iruWIrBeEV6mifE4sWpEbgnQrtgWgothDLEMtp2kwJvMbaCgYKAUUSARESFQHsvYlsKxqMK6pFuuT_g2GSOhYgzQ0163'
+                google_refresh_token = google_access_token_response.json().get('refresh_token')
+                google_id_token = google_access_token_response.json().get('id_token')
+                scope = google_access_token_response.json().get('scope')
+
+                # Usser Profile
+                google_profile_response = requests.get(
+                    url='https://www.googleapis.com/oauth2/v1/userinfo?access_token=%s' % google_access_token
+                )
+                print(google_profile_response.status_code)
+                print(google_profile_response.json())
+                if google_profile_response.status_code != 200:
+                    return jsonify(google_profile_response.json()), google_profile_response.status_code
+                google_id = google_profile_response.json().get('id')
+                google_email = google_profile_response.json().get('email')
+                if google_email is None:
+                    return jsonify({'message': 'failed to fetch email from google profile api.'}), 401
+                rdbconnection._cursor.execute(
+                    "INSERT INTO robochichi.users (primary_email) VALUES (%s) ON DUPLICATE KEY UPDATE password=NULL ",
+                    (google_email,)
+                )
+                rdbconnection._connection.commit()
+
+                user_info = get_user_info(google_email)
+                token = create_access_token(user_info.get('user_id'))
+                token_expires_on = datetime.datetime.now() + datetime.timedelta(days=28)
+                rdbconnection._cursor.execute(
+                    "INSERT INTO tokens (token, user_id, expires_on) VALUES (%s, %s, %s) "
+                    "ON DUPLICATE KEY UPDATE token=%s, expires_on=%s ",
+                    (token, user_info.get('user_id'), token_expires_on, token, token_expires_on))
+                rdbconnection._connection.commit()
+                time.sleep(10)
+                print('aaa', token)
+                return jsonify({'token': token}), 200
+
+        # password
         else:
             primary_email = request.json.get('username')
             password = request.json.get('password')
@@ -119,16 +200,10 @@ def login():
             else:
                 # by password
                 if hashpw(password) == get_user_info(primary_email).get('password'):
-                    token = create_access_token(identity=primary_email)
-                    token_expires_on = datetime.datetime.now() + datetime.timedelta(days=28)
-                    rdbconnection._cursor.execute(
-                        "INSERT INTO tokens (token, user_id, expires_on) VALUES (%s, %s, %s) "
-                        "ON DUPLICATE KEY UPDATE token=%s, expires_on=%s ",
-                        (token, user_info.get('user_id'), token_expires_on, token, token_expires_on))
-                    rdbconnection._connection.commit()
-                    return jsonify(token)
+                    token = generate_and_store_token(user_info.get('user_id'))
+                    return jsonify({'token': token})
                 else:
-                    return jsonify(None), 200
+                    return jsonify({'token': None}), 200
 
 
 @app.route("/validate-token", methods=['POST', 'GET'])
